@@ -11,9 +11,6 @@ pub enum EnvMatchError {
     #[error("Variable '{key}' not found in environment '{env}'")]
     VariableNotFound { key: String, env: String },
 
-    #[error("Environment '{env}' not found")]
-    EnvironmentNotFound { env: String },
-
     #[error("Failed to read config file: {source}")]
     ConfigReadError {
         #[from]

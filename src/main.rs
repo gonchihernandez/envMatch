@@ -8,7 +8,9 @@ use error::EnvMatchError;
 
 #[derive(Parser)]
 #[command(name = "envMatch")]
-#[command(about = "Environment Variable Manager - Match your environments like Rust matches patterns")]
+#[command(
+    about = "Environment Variable Manager - Match your environments like Rust matches patterns"
+)]
 #[command(version = "0.1.0")]
 struct Cli {
     #[command(subcommand)]
@@ -39,9 +41,7 @@ enum Commands {
         env: String,
     },
     /// Switch to a different environment
-    Switch {
-        environment: String,
-    },
+    Switch { environment: String },
     /// List all variables in current environment
     List {
         #[arg(short, long)]

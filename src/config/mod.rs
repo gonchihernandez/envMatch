@@ -28,10 +28,11 @@ impl ConfigManager {
         let base_dir = std::env::current_dir()
             .expect("Failed to get current directory")
             .join(ENV_MATCH_DIR);
-        
+
         Self { base_dir }
     }
 
+    #[cfg(test)]
     pub fn with_base_dir(base_dir: PathBuf) -> Self {
         Self { base_dir }
     }
@@ -83,7 +84,7 @@ impl ConfigManager {
         }
 
         let env_path = self.get_env_path(env_name);
-        
+
         if !env_path.exists() {
             // Create new environment if it doesn't exist
             let new_env = EnvConfig::default();
@@ -98,30 +99,30 @@ impl ConfigManager {
 
     pub fn save_environment(&self, env_name: &str, env_config: &EnvConfig) -> Result<()> {
         self.validate_environment_name(env_name)?;
-        
+
         let env_yaml = serde_yaml::to_string(env_config)?;
-        
+
         // Ensure environments directory exists
         fs::create_dir_all(self.get_environments_dir())?;
-        
+
         fs::write(self.get_env_path(env_name), env_yaml)?;
         Ok(())
     }
 
     pub fn list_environments(&self) -> Result<Vec<String>> {
         let env_dir = self.get_environments_dir();
-        
+
         if !env_dir.exists() {
             return Ok(vec![]);
         }
 
         let mut environments = Vec::new();
-        
+
         for entry in fs::read_dir(&env_dir)? {
             let entry = entry?;
             let path = entry.path();
-            
-            if path.extension().map_or(false, |ext| ext == "yaml") {
+
+            if path.extension().is_some_and(|ext| ext == "yaml") {
                 if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
                     environments.push(name.to_string());
                 }
@@ -130,10 +131,6 @@ impl ConfigManager {
 
         environments.sort();
         Ok(environments)
-    }
-
-    pub fn environment_exists(&self, env_name: &str) -> bool {
-        self.get_env_path(env_name).exists()
     }
 
     fn get_config_path(&self) -> PathBuf {
@@ -145,11 +142,15 @@ impl ConfigManager {
     }
 
     fn get_env_path(&self, env_name: &str) -> PathBuf {
-        self.get_environments_dir().join(format!("{}.yaml", env_name))
+        self.get_environments_dir()
+            .join(format!("{}.yaml", env_name))
     }
 
     fn validate_environment_name(&self, name: &str) -> Result<()> {
-        if name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-') {
+        if name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+        {
             Ok(())
         } else {
             Err(EnvMatchError::InvalidEnvironmentName {
@@ -174,13 +175,13 @@ mod tests {
     #[test]
     fn test_initialization() {
         let (config_manager, _temp_dir) = create_test_config_manager();
-        
+
         assert!(!config_manager.is_initialized());
-        
+
         config_manager.initialize().unwrap();
-        
+
         assert!(config_manager.is_initialized());
-        
+
         // Should fail to initialize again
         assert!(matches!(
             config_manager.initialize(),
@@ -211,12 +212,19 @@ mod tests {
         config_manager.initialize().unwrap();
 
         let mut env_config = EnvConfig::default();
-        env_config.variables.insert("TEST_VAR".to_string(), "test_value".to_string());
+        env_config
+            .variables
+            .insert("TEST_VAR".to_string(), "test_value".to_string());
 
-        config_manager.save_environment("test", &env_config).unwrap();
-        
+        config_manager
+            .save_environment("test", &env_config)
+            .unwrap();
+
         let loaded_env = config_manager.load_environment("test").unwrap();
-        assert_eq!(loaded_env.variables.get("TEST_VAR"), Some(&"test_value".to_string()));
+        assert_eq!(
+            loaded_env.variables.get("TEST_VAR"),
+            Some(&"test_value".to_string())
+        );
 
         let environments = config_manager.list_environments().unwrap();
         assert!(environments.contains(&"test".to_string()));
@@ -230,14 +238,17 @@ mod tests {
 
         let env_config = EnvConfig::default();
         let result = config_manager.save_environment("invalid name!", &env_config);
-        
-        assert!(matches!(result, Err(EnvMatchError::InvalidEnvironmentName { .. })));
+
+        assert!(matches!(
+            result,
+            Err(EnvMatchError::InvalidEnvironmentName { .. })
+        ));
     }
 
     #[test]
     fn test_not_initialized_error() {
         let (config_manager, _temp_dir) = create_test_config_manager();
-        
+
         let result = config_manager.load_global_config();
         assert!(matches!(result, Err(EnvMatchError::NotInitialized)));
     }

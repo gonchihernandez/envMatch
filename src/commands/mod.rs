@@ -12,33 +12,37 @@ impl EnvMatchCommands {
         }
     }
 
+    #[cfg(test)]
     pub fn with_config_manager(config_manager: ConfigManager) -> Self {
         Self { config_manager }
     }
 
     pub fn init(&self) -> Result<()> {
         self.config_manager.initialize()?;
-        
+
         println!("✅ envMatch initialized successfully!");
         println!("📁 Created .envMatch directory");
         println!("🔧 Default environment: development");
         println!("💡 Try: envMatch set DATABASE_URL postgres://localhost/myapp");
-        
+
         Ok(())
     }
 
     pub fn set_variable(&self, key: &str, value: &str, env_name: &str) -> Result<()> {
         let mut env_config = self.config_manager.load_environment(env_name)?;
-        env_config.variables.insert(key.to_string(), value.to_string());
-        self.config_manager.save_environment(env_name, &env_config)?;
-        
+        env_config
+            .variables
+            .insert(key.to_string(), value.to_string());
+        self.config_manager
+            .save_environment(env_name, &env_config)?;
+
         println!("✅ Set {}={} in environment '{}'", key, value, env_name);
         Ok(())
     }
 
     pub fn get_variable(&self, key: &str, env_name: &str) -> Result<String> {
         let env_config = self.config_manager.load_environment(env_name)?;
-        
+
         match env_config.variables.get(key) {
             Some(value) => {
                 println!("{}", value);
@@ -53,9 +57,10 @@ impl EnvMatchCommands {
 
     pub fn unset_variable(&self, key: &str, env_name: &str) -> Result<()> {
         let mut env_config = self.config_manager.load_environment(env_name)?;
-        
+
         if env_config.variables.remove(key).is_some() {
-            self.config_manager.save_environment(env_name, &env_config)?;
+            self.config_manager
+                .save_environment(env_name, &env_config)?;
             println!("✅ Removed '{}' from environment '{}'", key, env_name);
             Ok(())
         } else {
@@ -69,11 +74,11 @@ impl EnvMatchCommands {
     pub fn switch_environment(&self, env_name: &str) -> Result<()> {
         // Ensure the environment exists by loading it
         self.config_manager.load_environment(env_name)?;
-        
+
         let mut config = self.config_manager.load_global_config()?;
         config.current_environment = env_name.to_string();
         self.config_manager.save_global_config(&config)?;
-        
+
         println!("✅ Switched to environment '{}'", env_name);
         Ok(())
     }
@@ -82,26 +87,27 @@ impl EnvMatchCommands {
         let config = self.config_manager.load_global_config()?;
         let env_name = env_name.unwrap_or(&config.current_environment);
         let env_config = self.config_manager.load_environment(env_name)?;
-        
+
         println!("📋 Environment: {}", env_name);
         println!("{}", "─".repeat(40));
-        
+
         if env_config.variables.is_empty() {
             println!("(no variables set)");
             return Ok(vec![]);
         }
-        
+
         let mut vars: Vec<_> = env_config.variables.iter().collect();
         vars.sort_by_key(|(k, _)| *k);
-        
-        let result: Vec<(String, String)> = vars.iter()
+
+        let result: Vec<(String, String)> = vars
+            .iter()
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect();
-        
+
         for (key, value) in &vars {
             println!("{}={}", key, value);
         }
-        
+
         Ok(result)
     }
 
@@ -113,8 +119,10 @@ impl EnvMatchCommands {
 
     pub fn validate_environment(&self, required: Option<&str>) -> Result<()> {
         let config = self.config_manager.load_global_config()?;
-        let env_config = self.config_manager.load_environment(&config.current_environment)?;
-        
+        let env_config = self
+            .config_manager
+            .load_environment(&config.current_environment)?;
+
         if let Some(required_vars) = required {
             let required_list: Vec<&str> = required_vars.split(',').map(|s| s.trim()).collect();
             let missing: Vec<String> = required_list
@@ -122,9 +130,12 @@ impl EnvMatchCommands {
                 .filter(|&&var| !env_config.variables.contains_key(var))
                 .map(|&var| var.to_string())
                 .collect();
-            
+
             if missing.is_empty() {
-                println!("✅ All required variables are set in environment '{}'", config.current_environment);
+                println!(
+                    "✅ All required variables are set in environment '{}'",
+                    config.current_environment
+                );
                 Ok(())
             } else {
                 Err(EnvMatchError::MissingRequiredVariables {
@@ -134,7 +145,10 @@ impl EnvMatchCommands {
             }
         } else {
             let var_count = env_config.variables.len();
-            println!("✅ Environment '{}' has {} variable(s)", config.current_environment, var_count);
+            println!(
+                "✅ Environment '{}' has {} variable(s)",
+                config.current_environment, var_count
+            );
             Ok(())
         }
     }
@@ -142,15 +156,15 @@ impl EnvMatchCommands {
     pub fn list_environments(&self) -> Result<Vec<String>> {
         let environments = self.config_manager.list_environments()?;
         let config = self.config_manager.load_global_config()?;
-        
+
         if environments.is_empty() {
             println!("No environments found.");
             return Ok(vec![]);
         }
-        
+
         println!("📁 Available environments:");
         println!("{}", "─".repeat(30));
-        
+
         for env in &environments {
             if env == &config.current_environment {
                 println!("• {} (current)", env);
@@ -158,7 +172,7 @@ impl EnvMatchCommands {
                 println!("• {}", env);
             }
         }
-        
+
         Ok(environments)
     }
 }
@@ -180,21 +194,26 @@ mod tests {
     #[test]
     fn test_init_command() {
         let (commands, _temp_dir) = create_test_commands();
-        
+
         commands.init().unwrap();
-        
+
         // Should fail to init again
-        assert!(matches!(commands.init(), Err(EnvMatchError::AlreadyInitialized)));
+        assert!(matches!(
+            commands.init(),
+            Err(EnvMatchError::AlreadyInitialized)
+        ));
     }
 
     #[test]
     fn test_set_and_get_variable() {
         let (commands, _temp_dir) = create_test_commands();
         commands.init().unwrap();
-        
-        commands.set_variable("TEST_KEY", "test_value", "development").unwrap();
+
+        commands
+            .set_variable("TEST_KEY", "test_value", "development")
+            .unwrap();
         let value = commands.get_variable("TEST_KEY", "development").unwrap();
-        
+
         assert_eq!(value, "test_value");
     }
 
@@ -202,22 +221,27 @@ mod tests {
     fn test_unset_variable() {
         let (commands, _temp_dir) = create_test_commands();
         commands.init().unwrap();
-        
-        commands.set_variable("TEST_KEY", "test_value", "development").unwrap();
+
+        commands
+            .set_variable("TEST_KEY", "test_value", "development")
+            .unwrap();
         commands.unset_variable("TEST_KEY", "development").unwrap();
-        
+
         let result = commands.get_variable("TEST_KEY", "development");
-        assert!(matches!(result, Err(EnvMatchError::VariableNotFound { .. })));
+        assert!(matches!(
+            result,
+            Err(EnvMatchError::VariableNotFound { .. })
+        ));
     }
 
     #[test]
     fn test_switch_environment() {
         let (commands, _temp_dir) = create_test_commands();
         commands.init().unwrap();
-        
+
         commands.switch_environment("production").unwrap();
         let current = commands.show_current_environment().unwrap();
-        
+
         assert_eq!(current, "production");
     }
 
@@ -225,12 +249,16 @@ mod tests {
     fn test_list_variables() {
         let (commands, _temp_dir) = create_test_commands();
         commands.init().unwrap();
-        
-        commands.set_variable("KEY1", "value1", "development").unwrap();
-        commands.set_variable("KEY2", "value2", "development").unwrap();
-        
+
+        commands
+            .set_variable("KEY1", "value1", "development")
+            .unwrap();
+        commands
+            .set_variable("KEY2", "value2", "development")
+            .unwrap();
+
         let variables = commands.list_variables(None).unwrap();
-        
+
         assert_eq!(variables.len(), 2);
         assert!(variables.contains(&("KEY1".to_string(), "value1".to_string())));
         assert!(variables.contains(&("KEY2".to_string(), "value2".to_string())));
@@ -240,26 +268,33 @@ mod tests {
     fn test_validate_environment() {
         let (commands, _temp_dir) = create_test_commands();
         commands.init().unwrap();
-        
-        commands.set_variable("REQUIRED_VAR", "value", "development").unwrap();
-        
+
+        commands
+            .set_variable("REQUIRED_VAR", "value", "development")
+            .unwrap();
+
         // Should pass validation
         commands.validate_environment(Some("REQUIRED_VAR")).unwrap();
-        
+
         // Should fail validation for missing variable
         let result = commands.validate_environment(Some("MISSING_VAR"));
-        assert!(matches!(result, Err(EnvMatchError::MissingRequiredVariables { .. })));
+        assert!(matches!(
+            result,
+            Err(EnvMatchError::MissingRequiredVariables { .. })
+        ));
     }
 
     #[test]
     fn test_list_environments() {
         let (commands, _temp_dir) = create_test_commands();
         commands.init().unwrap();
-        
-        commands.set_variable("TEST", "value", "production").unwrap();
-        
+
+        commands
+            .set_variable("TEST", "value", "production")
+            .unwrap();
+
         let environments = commands.list_environments().unwrap();
-        
+
         assert!(environments.contains(&"development".to_string()));
         assert!(environments.contains(&"production".to_string()));
     }
