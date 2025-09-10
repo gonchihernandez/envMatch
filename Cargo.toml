@@ -1,0 +1,30 @@
+[package]
+name = "envMatch"
+version = "0.1.0"
+edition = "2021"
+description = "Environment Variable Manager - Match your environments like Rust matches patterns"
+authors = ["Gonchi Hernandez <gonchihernandez@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/gonchihernandez/envMatch"
+homepage = "https://github.com/gonchihernandez/envMatch"
+documentation = "https://github.com/gonchihernandez/envMatch/blob/main/README.md"
+readme = "README.md"
+keywords = ["environment", "variables", "cli", "development", "rust"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "envMatch"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+dirs = "5.0"
+thiserror = "1.0"
+anyhow = "1.0"
+
+[dev-dependencies]
+tempfile = "3.8"
+assert_cmd = "2.0"
+predicates = "3.0"
