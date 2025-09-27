@@ -1,6 +1,8 @@
 use crate::config::ConfigManager;
 use crate::error::{EnvMatchError, Result};
+use colored::*;
 
+#[derive(Debug)]
 pub struct EnvMatchCommands {
     config_manager: ConfigManager,
 }
@@ -17,15 +19,27 @@ impl EnvMatchCommands {
         Self { config_manager }
     }
 
-    pub fn init(&self) -> Result<()> {
+    pub fn init_with_environment(&self, env_name: &str) -> Result<()> {
         self.config_manager.initialize()?;
 
-        println!("✅ envMatch initialized successfully!");
-        println!("📁 Created .envMatch directory");
-        println!("🔧 Default environment: development");
-        println!("💡 Try: envMatch set DATABASE_URL postgres://localhost/myapp");
+        println!("{}", "✅ envMatch initialized successfully!".bright_green().bold());
+        println!("{}", "📁 Created .envMatch directory".bright_blue());
+        println!("{} {}", "🔧 Initial environment:".bright_yellow(), env_name.bright_green().bold());
+        
+        // Create the initial environment if it's not the default "development"
+        if env_name != "development" {
+            let env_config = crate::config::EnvConfig::default();
+            self.config_manager.save_environment(env_name, &env_config)?;
+            println!("{} {}", "🆕 Created environment:".bright_cyan(), env_name.bright_green().bold());
+        }
+        
+        println!("{} {}", "💡 Try:".bright_magenta(), format!("envMatch set API_KEY your-key-here -e {}", env_name).bright_cyan());
 
         Ok(())
+    }
+
+    pub fn is_initialized(&self) -> bool {
+        self.config_manager.is_initialized()
     }
 
     pub fn set_variable(&self, key: &str, value: &str, env_name: &str) -> Result<()> {
@@ -36,7 +50,13 @@ impl EnvMatchCommands {
         self.config_manager
             .save_environment(env_name, &env_config)?;
 
-        println!("✅ Set {}={} in environment '{}'", key, value, env_name);
+        println!("{} {}={} {} {}", 
+            "✅ Set".bright_green().bold(),
+            key.bright_cyan().bold(),
+            value.bright_yellow(),
+            "in environment".bright_white(),
+            format!("'{}'", env_name).bright_green().bold()
+        );
         Ok(())
     }
 
@@ -61,7 +81,12 @@ impl EnvMatchCommands {
         if env_config.variables.remove(key).is_some() {
             self.config_manager
                 .save_environment(env_name, &env_config)?;
-            println!("✅ Removed '{}' from environment '{}'", key, env_name);
+            println!("{} {} {} {}", 
+                "✅ Removed".bright_green().bold(),
+                format!("'{}'", key).bright_red().bold(),
+                "from environment".bright_white(),
+                format!("'{}'", env_name).bright_green().bold()
+            );
             Ok(())
         } else {
             Err(EnvMatchError::VariableNotFound {
@@ -79,7 +104,10 @@ impl EnvMatchCommands {
         config.current_environment = env_name.to_string();
         self.config_manager.save_global_config(&config)?;
 
-        println!("✅ Switched to environment '{}'", env_name);
+        println!("{} {}", 
+            "✅ Switched to environment".bright_green().bold(),
+            format!("'{}'", env_name).bright_green().bold().underline()
+        );
         Ok(())
     }
 
@@ -88,11 +116,11 @@ impl EnvMatchCommands {
         let env_name = env_name.unwrap_or(&config.current_environment);
         let env_config = self.config_manager.load_environment(env_name)?;
 
-        println!("📋 Environment: {}", env_name);
-        println!("{}", "─".repeat(40));
+        println!("{} {}", "📋 Environment:".bright_blue().bold(), env_name.bright_green().bold());
+        println!("{}", "─".repeat(40).bright_blue());
 
         if env_config.variables.is_empty() {
-            println!("(no variables set)");
+            println!("{}", "(no variables set)".bright_black());
             return Ok(vec![]);
         }
 
@@ -105,7 +133,7 @@ impl EnvMatchCommands {
             .collect();
 
         for (key, value) in &vars {
-            println!("{}={}", key, value);
+            println!("{}={}", key.bright_cyan().bold(), value.bright_green());
         }
 
         Ok(result)

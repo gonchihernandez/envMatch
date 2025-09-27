@@ -19,6 +19,7 @@ pub struct GlobalConfig {
     pub current_environment: String,
 }
 
+#[derive(Debug)]
 pub struct ConfigManager {
     base_dir: PathBuf,
 }

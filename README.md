@@ -9,10 +9,11 @@
 ## ✨ Features
 
 - 🔧 **Multi-Environment Support** - Manage separate variable sets for dev, staging, prod
+- 🎨 **Beautiful TUI Interface** - Interactive terminal user interface with Ratatui
 - 🔄 **Easy Environment Switching** - Switch between environments with a single command
 - ✅ **Variable Validation** - Ensure required variables are set before deployment
 - 📋 **Smart Listing** - View all variables in any environment
-- 🎯 **Simple CLI** - Intuitive command-line interface
+- 🎯 **Dual Interface** - Both CLI commands and interactive TUI available
 - 📁 **Local Storage** - Variables stored securely in YAML files
 - 🚀 **Fast & Reliable** - Built with Rust for performance and safety
 
@@ -48,54 +49,82 @@ cargo install envMatch
 
 ### Basic Usage
 
+#### Interactive TUI Mode (Default)
+```bash
+# Launch the interactive terminal interface (default when envMatch is initialized)
+./envMatch
+# or explicitly
+./envMatch tui
+```
+
+The TUI provides a beautiful, interactive interface with:
+- 📁 **Left Panel**: Environment list with current environment highlighted
+- 🔧 **Right Panel**: Variable list for the selected environment
+- ⌨️ **Keyboard Navigation**: 
+  - `Tab` to switch between panels
+  - `↑/↓` or `k/j` to navigate
+  - `a` to add variables, `e` to edit, `d` to delete
+  - `Enter` to switch environments
+  - `h` or `F1` for help
+  - `q` to quit
+
+#### Command Line Mode
 ```bash
 # Initialize envMatch in your project
-cargo run -- init
+./envMatch init
 
 # Set environment variables
-cargo run -- set DATABASE_URL postgres://localhost/myapp
-cargo run -- set API_KEY your_secret_key
-cargo run -- set DEBUG true
+./envMatch set DATABASE_URL postgres://localhost/myapp
+./envMatch set API_KEY your_secret_key
+./envMatch set DEBUG true
 
 # Create production environment
-cargo run -- set DATABASE_URL postgres://prod-server/myapp --env production
-cargo run -- set API_KEY prod_secret_key --env production
-cargo run -- set DEBUG false --env production
+./envMatch set DATABASE_URL postgres://prod-server/myapp --env production
+./envMatch set API_KEY prod_secret_key --env production
+./envMatch set DEBUG false --env production
 
 # Switch environments
-cargo run -- switch production
+./envMatch switch production
 
 # List current environment variables
-cargo run -- list
+./envMatch list
 
 # Validate required variables
-cargo run -- validate --required DATABASE_URL,API_KEY
+./envMatch validate --required DATABASE_URL,API_KEY
 ```
 
 ## 📚 Commands
 
+### Interactive TUI
+```bash
+./envMatch tui
+# or simply
+./envMatch
+```
+Launches the interactive terminal user interface for visual management of environments and variables.
+
 ### Initialize
 ```bash
-cargo run -- init
+./envMatch init
 ```
 Creates `.envMatch` directory structure in your current project.
 
 ### Set Variables
 ```bash
 # Set in current environment (default: development)
-cargo run -- set KEY value
+./envMatch set KEY value
 
 # Set in specific environment
-cargo run -- set KEY value --env production
+./envMatch set KEY value --env production
 ```
 
 ### Get Variables
 ```bash
 # Get from current environment
-cargo run -- get KEY
+./envMatch get KEY
 
 # Get from specific environment
-cargo run -- get KEY --env production
+./envMatch get KEY --env production
 ```
 
 ### Remove Variables
