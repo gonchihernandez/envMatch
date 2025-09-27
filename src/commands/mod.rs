@@ -22,18 +22,36 @@ impl EnvMatchCommands {
     pub fn init_with_environment(&self, env_name: &str) -> Result<()> {
         self.config_manager.initialize()?;
 
-        println!("{}", "✅ envMatch initialized successfully!".bright_green().bold());
+        println!(
+            "{}",
+            "✅ envMatch initialized successfully!"
+                .bright_green()
+                .bold()
+        );
         println!("{}", "📁 Created .envMatch directory".bright_blue());
-        println!("{} {}", "🔧 Initial environment:".bright_yellow(), env_name.bright_green().bold());
-        
+        println!(
+            "{} {}",
+            "🔧 Initial environment:".bright_yellow(),
+            env_name.bright_green().bold()
+        );
+
         // Create the initial environment if it's not the default "development"
         if env_name != "development" {
             let env_config = crate::config::EnvConfig::default();
-            self.config_manager.save_environment(env_name, &env_config)?;
-            println!("{} {}", "🆕 Created environment:".bright_cyan(), env_name.bright_green().bold());
+            self.config_manager
+                .save_environment(env_name, &env_config)?;
+            println!(
+                "{} {}",
+                "🆕 Created environment:".bright_cyan(),
+                env_name.bright_green().bold()
+            );
         }
-        
-        println!("{} {}", "💡 Try:".bright_magenta(), format!("envMatch set API_KEY your-key-here -e {}", env_name).bright_cyan());
+
+        println!(
+            "{} {}",
+            "💡 Try:".bright_magenta(),
+            format!("envMatch set API_KEY your-key-here -e {}", env_name).bright_cyan()
+        );
 
         Ok(())
     }
@@ -50,7 +68,8 @@ impl EnvMatchCommands {
         self.config_manager
             .save_environment(env_name, &env_config)?;
 
-        println!("{} {}={} {} {}", 
+        println!(
+            "{} {}={} {} {}",
             "✅ Set".bright_green().bold(),
             key.bright_cyan().bold(),
             value.bright_yellow(),
@@ -81,7 +100,8 @@ impl EnvMatchCommands {
         if env_config.variables.remove(key).is_some() {
             self.config_manager
                 .save_environment(env_name, &env_config)?;
-            println!("{} {} {} {}", 
+            println!(
+                "{} {} {} {}",
                 "✅ Removed".bright_green().bold(),
                 format!("'{}'", key).bright_red().bold(),
                 "from environment".bright_white(),
@@ -104,7 +124,8 @@ impl EnvMatchCommands {
         config.current_environment = env_name.to_string();
         self.config_manager.save_global_config(&config)?;
 
-        println!("{} {}", 
+        println!(
+            "{} {}",
             "✅ Switched to environment".bright_green().bold(),
             format!("'{}'", env_name).bright_green().bold().underline()
         );
@@ -116,7 +137,11 @@ impl EnvMatchCommands {
         let env_name = env_name.unwrap_or(&config.current_environment);
         let env_config = self.config_manager.load_environment(env_name)?;
 
-        println!("{} {}", "📋 Environment:".bright_blue().bold(), env_name.bright_green().bold());
+        println!(
+            "{} {}",
+            "📋 Environment:".bright_blue().bold(),
+            env_name.bright_green().bold()
+        );
         println!("{}", "─".repeat(40).bright_blue());
 
         if env_config.variables.is_empty() {
@@ -223,11 +248,11 @@ mod tests {
     fn test_init_command() {
         let (commands, _temp_dir) = create_test_commands();
 
-        commands.init().unwrap();
+        commands.init_with_environment("development").unwrap();
 
         // Should fail to init again
         assert!(matches!(
-            commands.init(),
+            commands.init_with_environment("development"),
             Err(EnvMatchError::AlreadyInitialized)
         ));
     }
@@ -235,7 +260,7 @@ mod tests {
     #[test]
     fn test_set_and_get_variable() {
         let (commands, _temp_dir) = create_test_commands();
-        commands.init().unwrap();
+        commands.init_with_environment("development").unwrap();
 
         commands
             .set_variable("TEST_KEY", "test_value", "development")
@@ -248,7 +273,7 @@ mod tests {
     #[test]
     fn test_unset_variable() {
         let (commands, _temp_dir) = create_test_commands();
-        commands.init().unwrap();
+        commands.init_with_environment("development").unwrap();
 
         commands
             .set_variable("TEST_KEY", "test_value", "development")
@@ -265,7 +290,7 @@ mod tests {
     #[test]
     fn test_switch_environment() {
         let (commands, _temp_dir) = create_test_commands();
-        commands.init().unwrap();
+        commands.init_with_environment("development").unwrap();
 
         commands.switch_environment("production").unwrap();
         let current = commands.show_current_environment().unwrap();
@@ -276,7 +301,7 @@ mod tests {
     #[test]
     fn test_list_variables() {
         let (commands, _temp_dir) = create_test_commands();
-        commands.init().unwrap();
+        commands.init_with_environment("development").unwrap();
 
         commands
             .set_variable("KEY1", "value1", "development")
@@ -295,7 +320,7 @@ mod tests {
     #[test]
     fn test_validate_environment() {
         let (commands, _temp_dir) = create_test_commands();
-        commands.init().unwrap();
+        commands.init_with_environment("development").unwrap();
 
         commands
             .set_variable("REQUIRED_VAR", "value", "development")
@@ -315,7 +340,7 @@ mod tests {
     #[test]
     fn test_list_environments() {
         let (commands, _temp_dir) = create_test_commands();
-        commands.init().unwrap();
+        commands.init_with_environment("development").unwrap();
 
         commands
             .set_variable("TEST", "value", "production")

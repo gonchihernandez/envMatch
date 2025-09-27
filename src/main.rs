@@ -84,8 +84,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if commands.is_initialized() {
             Commands::Tui
         } else {
-            Commands::Init { 
-                environment: "development".to_string() 
+            Commands::Init {
+                environment: "development".to_string(),
             }
         }
     });
